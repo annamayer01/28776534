@@ -1,5 +1,5 @@
 ---
-output:
+output: github_document
   md_document:
     variant: markdown_github
 ---

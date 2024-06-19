@@ -1,0 +1,194 @@
+---
+# IMPORTANT: Change settings here, but DO NOT change the spacing.
+# Remove comments and add values where applicable.
+# The descriptions below should be self-explanatory
+
+title: "Using SQL Queries"
+#subtitle: "This will appear as Right Header"
+
+documentclass: "elsarticle"
+
+# --------- Thesis title (Optional - set to FALSE by default).
+# You can move the details below around as you please.
+Thesis_FP: FALSE
+# Entry1: "An unbelievable study with a title spanning multiple lines."
+# Entry2: "\\textbf{Some Guy}" # textbf for bold
+# Entry3: "A thesis submitted toward the degree of Doctor of Philosophy"
+# Uni_Logo: Tex/Logo.png # Place a logo in the indicated location (from your root, e.g. defaults to ~/Tex/Logo.png) and uncomment this line. Leave uncommented for no image
+# Logo_width: 0.3 # If using a logo - use this to set width (size) of image
+# Entry4: "Under the supervision of: \\vfill Prof. Joe Smith and Dr. Frank Smith"
+# Entry5: "Stellenbosch University"
+# Entry6: April 2020
+# Entry7:
+# Entry8:
+
+# --------- Front Page
+# Comment: ----- Follow this pattern for up to 5 authors
+AddTitle: TRUE # Use FALSE when submitting to peer reviewed platform. This will remove author names.
+Author1: "Anna Mayer"  # First Author - note the thanks message displayed as an italic footnote of first page.
+Ref1: "Stellenbosch University" # First Author's Affiliation
+Email1: "28776534\\@sun.ac.za" # First Author's Email address
+
+# Comment out below to remove both. JEL Codes only given if keywords also given.
+keywords: "CPI \\sep Braai \\sep Inflation" # Use \\sep to separate
+#JELCodes: "L250 \\sep L100"
+
+# ----- Manage headers and footers:
+#BottomLFooter: $Title$
+#BottomCFooter:
+#TopLHeader: \leftmark # Adds section name at topleft. Remove comment to add it.
+BottomRFooter: "\\footnotesize Page \\thepage" # Add a '#' before this line to remove footer.
+addtoprule: TRUE
+addfootrule: TRUE               # Use if footers added. Add '#' to remove line.
+
+# --------- page margins:
+margin: 2.3 # Sides
+bottom: 2 # bottom
+top: 2.5 # Top
+HardSet_layout: TRUE # Hard-set the spacing of words in your document. This will stop LaTeX squashing text to fit on pages, e.g.
+# This is done by hard-setting the spacing dimensions. Set to FALSE if you want LaTeX to optimize this for your paper.
+
+# --------- Line numbers
+linenumbers: FALSE # Used when submitting to journal
+
+# ---------- References settings:
+# You can download cls format here: https://www.zotero.org/ - simply search for your institution. You can also edit and save cls formats here: https://editor.citationstyles.org/about/
+# Hit download, store it in Tex/ folder, and change reference below - easy.
+bibliography: Tex/ref.bib       # Do not edit: Keep this naming convention and location.
+csl: Tex/harvard-stellenbosch-university.csl # referencing format used.
+# By default, the bibliography only displays the cited references. If you want to change this, you can comment out one of the following:
+#nocite: '@*' # Add all items in bibliography, whether cited or not
+# nocite: |  # add specific references that aren't cited
+#  @grinold2000
+#  @Someoneelse2010
+
+# ---------- General:
+RemovePreprintSubmittedTo: TRUE  # Removes the 'preprint submitted to...' at bottom of titlepage
+#Journal: "Journal of Finance"   # Journal that the paper will be submitting to, if RemovePreprintSubmittedTo is set to TRUE.
+toc: FALSE                       # Add a table of contents
+numbersections: TRUE             # Should sections (and thus figures and tables) be numbered?
+fontsize: 11pt                  # Set fontsize
+linestretch: 1.2                # Set distance between lines.
+link-citations: TRUE            # This creates dynamic links to the papers in reference list.
+
+### Adding additional latex packages:
+# header-includes:
+#    - \usepackage{colortbl} # Add additional packages here.
+
+output:
+  pdf_document:
+    keep_tex: TRUE
+    template: Tex/TexDefault.txt
+    fig_width: 3.5 # Adjust default figure sizes. This can also be done in the chunks of the text.
+    fig_height: 3.5
+abstract: |
+  This report analyses price changes due to inflation in South Africa and proposes a new index - the braaibrodje index. 
+---
+
+<!-- First: Set your default preferences for chunk options: -->
+
+<!-- If you want a chunk's code to be printed, set echo = TRUE. message = FALSE stops R printing ugly package loading details in your final paper too. I also suggest setting warning = FALSE and checking for warnings in R, else you might find ugly warnings in your paper. -->
+
+```{r setup, include=FALSE}
+# Initial settings
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, fig.width = 6, fig.height = 5, fig.pos="H", fig.pos = 'H')
+# Note: Include = FALSE implies the code is executed, but not printed in your pdf.
+# warning and message = FALSE implies ugly messages and warnings are removed from your pdf.
+# These should be picked up when you execute the command chunks (code sections below) in your rmd, not printed in your paper!
+
+# Lets load in example data, and see how this can be stored and later called from your 'data' folder.
+if(!require("tidyverse")) install.packages("tidyverse")
+library(tidyverse)
+library(dbbasic)
+library(tidytext)
+library(quanteda)
+library(topicmodels)
+
+# usethis::edit_r_environ()
+# restart R
+
+list.files('Question5/code/', full.names = T, recursive = T) %>% .[grepl('.R', .)] %>% as.list() %>% walk(~source(.))
+
+
+conn <- db_connect(db = "psql_datascience")
+DBI::dbDisconnect(conn)
+
+retailer <- db_query("SELECT * FROM retailer;", db = "psql_datascience")  
+statssa <- db_query("SELECT * FROM statssa;", db = "psql_datascience")  
+
+# vector with braai ingredients
+ingredients <- c("bread", "cheese", "margarine", "tomatoes", "onions", "salt", "chutney")
+
+retailer_filtered <- retailer %>% 
+  filter(category %in% ingredients) 
+
+statssa_filtered <- statssa %>% 
+  filter(grepl("white bread|cheddar|margarine|tomatoes|onions|salt|chutney", type, ignore.case = TRUE)) %>%
+    mutate(ingredient = str_to_lower(str_extract(type, "white bread|cheddar|margarine|tomatoes|onions|salt|chutney|Tomatoes|Onions|Salt|Chutney|White bread|Cheddar|Margarine"))) %>% filter(date >= as.Date("2020-03-29"))
+# also made everything to lower case so it is like category variable 
+
+```
+
+
+<!-- ############################## -->
+<!-- # Start Writing here: -->
+<!-- ############################## -->
+
+# Introduction \label{Introduction}
+Using a novel approach with the braaibrodjie index, this report aims to visualize the impact of inflation. Two data sets are used for the analysis and the results for the indices are compared. Further, general summary statistics and price development in general over time are part of the report. 
+
+# Data 
+Two data sets were provided. One on retailer prices. The other one contains data from StatsSA. Note that the StatsSA data set was adjusted such that the two data sets cover the same periods. 
+
+# Analysis
+
+## A Braaibrodje index
+Given the two data sets provided, two different braaibrodjies indices are calculated and plotted separately for the two different data sets.  
+```{r Figure1,  warning =  FALSE, fig.align = 'center', fig.cap = "Braaibrodjie Index Stats SA Retailer \\label{Figure1}", fig.ext = 'png', fig.height = 3, fig.width = 6}
+
+source("code/Retailer.R")
+retailer_plot <- retailer_plot_fct(data=retailer_filtered)
+retailer_plot
+
+```
+Already in this graph, we can see, that the prices have been increasing significantly over the pat years. 
+In a next step, we will have a look at the index over time from the other data set. 
+```{r Figure2, warning =  FALSE, fig.align = 'center', fig.cap = "Braaibrodjie Index Stats SA \\label{Figure2}", fig.height = 3, fig.width = 6, dev = 'png'}
+source("code/StatsSA.R")
+statssa_plot <- statssa_plot_fct(data=statssa_filtered)
+statssa_plot
+
+
+```
+
+As one can clearly see in both graphs, prices have increased int he past three years. As the braaibrodjie index from the Retailer data shows clearly a larger increase in prices, it might be the case that the data from StatsSA is underestimating the true inflation. Nevertheless, no quantities were given to which the prices relate in the StatsSA data, which leaves us with speculation whether we can assume that the prices relate to the same quantities.
+
+To have a closer look into general summary statistics of the data set, please continue with the next section. 
+## B - Summary Statistics and comparison of the data 
+First, this report compares mean prices of the different ingredients for Braaibrodjie to check whether the data sets have similar price observations. 
+```{r Figure3, warning =  FALSE, fig.align = 'center', fig.cap = "Summary Statistics \\label{Figure3}", fig.height = 3, fig.width = 6, dev = 'png'}
+source("code/summary_stats.R")
+plot <- plot_summary_stats(data1=retailer_filtered, data2=statssa_filtered)
+plot
+
+```
+Again, one can see that the Stats SA and the Retailer data sets use different prices. One wonders whether this is due to different quantities, they are referring to or whether there are other reasons for the difference in prices. 
+
+Finally, this report looks at the price development of tomatoes over the past three years in the two different data sets. 
+```{r Figure4, warning =  FALSE, fig.align = 'center', fig.cap = "Tomato Prices over Time \\label{Figure4}", fig.height = 3, fig.width = 6, dev = 'png'}
+source("code/tomatoe_prices.R")
+plot <- plot_monthly_tomato_prices(data1=retailer_filtered, data2=statssa_filtered)
+plot
+
+```
+Tomato prices have been increasing in both data sets which is also in line with the increasing braaibrodjies index in both data sets. 
+
+Based on other estimates, annual consumer price inflation was 5,2% in April 2024, down from the 5,3% in March 2024.The consumer price index increased by 0,3% in April 2024. 
+
+
+# Conclusion
+The braaibrodjie index provides a hands on understandable, especially for the South African context, index for inflation. It is similar to the big mac index that has been used for several years now. However, for the South Africa, a braaibrodjie index seems more fitting. In the graphs provided, one could clearly see the inflation patterns and price increases which were visible in both data sets based on the novel index. 
+
+
+
+

@@ -1,0 +1,153 @@
+---
+title: "Music Taste Across Time"
+documentclass: elsarticle
+Thesis_FP: false
+output:
+  pdf_document:
+    keep_tex: true
+    template: Tex/TexDefault.txt
+    fig_width: 3.5
+    fig_height: 3.5
+  word_document: default
+Author1: Anna Mayer
+Ref1: Stellenbosch University
+Email1: "28776534\\@sun.ac.za" # First Author's Email address
+keywords: Spotify \sep Coldplay \sep Metallica
+BottomRFooter: \footnotesize Page \thepage
+addtoprule: true
+addfootrule: true
+margin: 2.3
+bottom: 2
+top: 2.5
+HardSet_layout: true
+linenumbers: false
+bibliography: Tex/ref.bib
+csl: "Tex/harvard-stellenbosch-university.csl"
+RemovePreprintSubmittedTo: true
+toc: false
+numbersections: true
+fontsize: 11pt
+linestretch: 1.2
+link-citations: true
+AddTitle: true
+abstract: |
+  This report analyses the longevity and musical progression of some of the most famous bands over time, focussing specifically on a comparison of Metallica and Coldplay. While Coldplay is a relatively young band compared to Metallica, both have been sucessful and very popular as one can see in the graphs of this report. 
+---
+
+<!-- First: Set your default preferences for chunk options: -->
+
+<!-- If you want a chunk's code to be printed, set echo = TRUE. message = FALSE stops R printing ugly package loading details in your final paper too. I also suggest setting warning = FALSE and checking for warnings in R, else you might find ugly warnings in your paper. -->
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, fig.width = 6, fig.height = 5, fig.pos="H", fig.pos = 'H')
+# Note: Include = FALSE implies the code is executed, but not printed in your pdf.
+# warning and message = FALSE implies ugly messages and warnings are removed from your pdf.
+# These should be picked up when you execute the command chunks (code sections below) in your rmd, not printed in your paper!
+
+# Lets load in example data, and see how this can be stored and later called from your 'data' folder.
+if(!require("tidyverse")) install.packages("tidyverse")
+library(tidyverse)
+library(ggplot2)
+# Notice that as you are working in a .Rproj file (I am assuming you are) - the relative paths of your directories start at your specified root.
+# This means that when working in a .Rproj file, you never need to use getwd() - it is assumed as your base root automatically.
+list.files('Question2/code/', full.names = T, recursive = T) %>% .[grepl('.R', .)] %>% as.list() %>% walk(~source(.))
+
+#Data Loading
+# Note that spotify dataset and billboard_100 were provided as RDS files.
+coldplay <- read_csv("data/Coldplay_vs_Metallica/Coldplay.csv")
+metallica <- read_csv("data/Coldplay_vs_Metallica/metallica.csv")
+spotify <- readRDS("data/Coldplay_vs_Metallica/Broader_Spotify_Info.rds")
+billboard_100 <- readRDS("data/Coldplay_vs_Metallica/charts.rds")
+
+# Filter out live recordings for direct comparisons
+coldplay_studio <- coldplay[!grepl('Live', coldplay$name, ignore.case = TRUE), ] %>%
+    mutate(release_year = as.numeric(format(as.Date(release_date), "%Y")))
+
+metallica_studio <- metallica[!grepl('Live', metallica$name, ignore.case = TRUE), ] %>%
+        mutate(release_year = as.numeric(format(as.Date(release_date), "%Y")))
+
+billboard_100_studio <- billboard_100[!grepl('Live', billboard_100$song, ignore.case = TRUE), ] 
+
+spotify_studio <- spotify[!grepl('Live', spotify$name, ignore.case = TRUE), ] 
+
+```
+
+
+<!-- ############################## -->
+<!-- # Start Writing here: -->
+<!-- ############################## -->
+
+# Introduction \label{Introduction}
+This report analyses the longevity and musical progression of some of the most famous bands over time. It looks into different data sets provided on popularity and other interesting determinants of music like valence of songs. The main focus lies on the musical progression of the two bands over time and their popularity in general.  
+
+
+# Data 
+The data used for analysis focuses on the two bands Metallica and Coldplay. Moreover, data from Spotify and the Billboard Top 100 list were used for the analysis below.
+
+
+# Analysis
+Let us first have a closer look at the popularity by album for each of the bands individually: 
+```{r Figure1, warning =  FALSE, fig.align = 'center', fig.cap = "Popularity by album of Metallica \\label{Figure1}", fig.height = 5, fig.width = 7, dev = 'png'}
+source("code/Album_popularity_Metallica.R")
+plot_Metallica <- create_boxplot_Metallica(data=metallica_studio, title="Popularity by album - Metallica")
+plot_Metallica
+
+```
+As one can see, there is large variation in the popularity by album for Metallica. The on average most succesful album seems to be 72 Seasons. The on average least successful album seems to be Master of Puppets (Deluxe Box Set/ Remastered). 
+
+In a next step, let us have a closer look at Coldplay:
+```{r Figure2, warning =  FALSE, fig.align = 'center', fig.cap = "Popularity by album for Coldplay \\label{Figure2}", fig.height = 3, fig.width = 6, dev = 'png'}
+source("code/Album_popularity_Coldplay.R")
+plot_Coldplay <- create_boxplot_Coldplay(data=coldplay_studio, title="Popularity by album - Coldplay")
+plot_Coldplay
+
+
+```
+Again, we can see that some albums are more popular than others. Parachutes seems to be the most popular ablum whereas, Love in Tokyo and Everyday Life do not seem to be comparatively very popular. 
+
+
+Let us now compare the two bands and their popularity over time:
+```{r Figure3,  warning =  FALSE, fig.align = 'center', fig.cap = "Average Popularity Scores over Time \\label{Figure3}", fig.ext = 'png', fig.height = 3, fig.width = 6}
+#plot trends
+source("code/Popularity.R")
+plot_popularity_over_time(data_coldplay=coldplay_studio, data_metallica=metallica_studio)
+
+```
+As one can see in the graph above, Coldplay only exists since 1997. However, their popularity was directly relatively high from the beginning. Using the release date of the different albums to refer to the years the bands were active, one can see, that there is in the beginning for Metallica a large variation across albums. For Coldplay, when they started releasing around 2000, their first albums were directly a huge success. However, variation of the popularity for the Coldplay albums increased overt time. In general, the popularity score ranges from 0 to 100. One might wonder what the popularity score actually consists of and which criteria are used to assign points. If one wants to dig deeper into the sphere of popularity scores, @info11060323 provide a novel approach to assigning popularity scores.  
+
+
+Another interesting aspect for comparison could be how often the two bands Coldplay and Metallica were in the top 100 Billboard charts:
+```{r Figure4,  warning =  FALSE, fig.align = 'center', fig.cap = "Amount of top 10 in Billboard 100 (no features) \\label{Figure4}", fig.ext = 'png', fig.height = 4, fig.width = 6}
+source("code/Billboard_Top_10.R")
+plot_top10_mentions(data=billboard_100, artist1 = "Coldplay", artist2 = "Metallica")
+
+
+```
+Note that featurings are not included in the count. This graph is comparing Coldplay and Metallica with the singer/band that was ranked most in the top 10 of the Billboard top 100 ranking over time. Mariah Carey is clearly the winner here. Nevertheless, Coldplay was 19 times in the top 10 and Metallica once.
+
+Comparing it to the total amount of times the two bands appeared in the top 100, Coldplay was ranked there 281 times and Metallica 197, which is remarkable, as Coldplay only exists since 1997 and Metallica longer. However, he different genres and the fact that Metallica probably adresses a smaller group of listeners, might explain that difference.
+
+Finally, comparing and analyzing how valence developed over time for Metallica and Coldplay Valence "describes the musical positiveness conveyed by a track. Tracks with high valence sound more positive (e.g. happy, cheerful, euphoric), while tracks with low valence sound more negative (e.g. sad, depressed, angry)".
+```{r Figure5,  warning =  FALSE, fig.align = 'center', fig.cap = "Valence over time \\label{Figure5}", fig.ext = 'png', fig.height = 3, fig.width = 6}
+source("code/Valence.R")
+plot_valence <- plot_valence_over_time(data=spotify_studio)
+plot_valence
+```
+As one can see, there is a large variation in average valence, especially for Coldplay. However, for Metallica there seems to be a downward trend since the end of the 1990s, meaning that tracks of Metallica seem to sound more negative on average recently. For Coldplay, it varies a lot, even more than Metallica, which might be a reason for their success as they address both groups, those that prefer more negative and those that prefer more positive music. In the 2010s the music seems however also to be more negative for Coldplay. 
+
+# Conclusion
+To conclude, one can say, that both bands are clearly popular and famous. Some albums are more popular than others and although Coldplay is younger, they have more top 10 rankings and also in general top 100 rankings in the billboard ranking than Metallica. One reason might be that Coldplay maybe addresses a larger amount of listeners given that they cover a larger spectrum of for example valence in their music but also address listeners of a genre in general that is probably more popular than the genre Metallica is in. 
+
+
+<!-- Make title of bibliography here: -->
+<!-- \newpage -->
+
+\newpage
+
+# References {-}
+
+<div id="refs"></div>
+
+
+
+

@@ -1,0 +1,163 @@
+---
+# IMPORTANT: Change settings here, but DO NOT change the spacing.
+# Remove comments and add values where applicable.
+# The descriptions below should be self-explanatory
+
+title: "Russia-Ukraine Conflict"
+#subtitle: "This will appear as Right Header"
+
+documentclass: "elsarticle"
+
+# --------- Thesis title (Optional - set to FALSE by default).
+# You can move the details below around as you please.
+Thesis_FP: FALSE
+# Entry1: "An unbelievable study with a title spanning multiple lines."
+# Entry2: "\\textbf{Some Guy}" # textbf for bold
+# Entry3: "A thesis submitted toward the degree of Doctor of Philosophy"
+# Uni_Logo: Tex/Logo.png # Place a logo in the indicated location (from your root, e.g. defaults to ~/Tex/Logo.png) and uncomment this line. Leave uncommented for no image
+# Logo_width: 0.3 # If using a logo - use this to set width (size) of image
+# Entry4: "Under the supervision of: \\vfill Prof. Joe Smith and Dr. Frank Smith"
+# Entry5: "Stellenbosch University"
+# Entry6: April 2020
+# Entry7:
+# Entry8:
+
+# --------- Front Page
+# Comment: ----- Follow this pattern for up to 5 authors
+AddTitle: TRUE # Use FALSE when submitting to peer reviewed platform. This will remove author names.
+Author1: "Anna Mayer"  # First Author - note the thanks message displayed as an italic footnote of first page.
+Ref1: "Stellenbosch University" # First Author's Affiliation
+Email1: "28776534\\@sun.ac.za" # First Author's Email address
+
+
+#CorrespAuthor_1: TRUE  # If corresponding author is author 3, e.g., use CorrespAuthor_3: TRUE
+
+# Comment out below to remove both. JEL Codes only given if keywords also given.
+keywords: "Ukraine \\sep Russia \\sep Conflict \\sep Aid \\sep Commitment gap" # Use \\sep to separate
+#JELCodes: "L250 \\sep L100"
+
+# ----- Manage headers and footers:
+#BottomLFooter: $Title$
+#BottomCFooter:
+#TopLHeader: \leftmark # Adds section name at topleft. Remove comment to add it.
+BottomRFooter: "\\footnotesize Page \\thepage" # Add a '#' before this line to remove footer.
+addtoprule: TRUE
+addfootrule: TRUE               # Use if footers added. Add '#' to remove line.
+
+# --------- page margins:
+margin: 2.3 # Sides
+bottom: 2 # bottom
+top: 2.5 # Top
+HardSet_layout: TRUE # Hard-set the spacing of words in your document. This will stop LaTeX squashing text to fit on pages, e.g.
+# This is done by hard-setting the spacing dimensions. Set to FALSE if you want LaTeX to optimize this for your paper.
+
+# --------- Line numbers
+linenumbers: FALSE # Used when submitting to journal
+
+# ---------- References settings:
+# You can download cls format here: https://www.zotero.org/ - simply search for your institution. You can also edit and save cls formats here: https://editor.citationstyles.org/about/
+# Hit download, store it in Tex/ folder, and change reference below - easy.
+bibliography: Tex/ref.bib       # Do not edit: Keep this naming convention and location.
+csl: Tex/harvard-stellenbosch-university.csl # referencing format used.
+# By default, the bibliography only displays the cited references. If you want to change this, you can comment out one of the following:
+#nocite: '@*' # Add all items in bibliography, whether cited or not
+# nocite: |  # add specific references that aren't cited
+#  @grinold2000
+#  @Someoneelse2010
+
+# ---------- General:
+RemovePreprintSubmittedTo: FALSE  # Removes the 'preprint submitted to...' at bottom of titlepage
+Journal: "From Russia With No Love"   # Journal that the paper will be submitting to, if RemovePreprintSubmittedTo is set to TRUE.
+toc: FALSE                       # Add a table of contents
+numbersections: TRUE             # Should sections (and thus figures and tables) be numbered?
+fontsize: 11pt                  # Set fontsize
+linestretch: 1.2                # Set distance between lines.
+link-citations: TRUE            # This creates dynamic links to the papers in reference list.
+
+### Adding additional latex packages:
+# header-includes:
+#    - \usepackage{colortbl} # Add additional packages here.
+
+output:
+  pdf_document:
+    keep_tex: TRUE
+    template: Tex/TexDefault.txt
+    fig_width: 3.5 # Adjust default figure sizes. This can also be done in the chunks of the text.
+    fig_height: 3.5
+abstract: |
+ This report provides insights on aid allocation with regard to Russia-Ukraine conflict and specifically analyses the "commitment gap", showing which countries commited to more aid than they actually allocated. A focus lies on EU member countries.
+---
+
+<!-- First: Set your default preferences for chunk options: -->
+
+<!-- If you want a chunk's code to be printed, set echo = TRUE. message = FALSE stops R printing ugly package loading details in your final paper too. I also suggest setting warning = FALSE and checking for warnings in R, else you might find ugly warnings in your paper. -->
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, fig.width = 6, fig.height = 5, fig.pos="H", fig.pos = 'H')
+
+library(pacman)
+p_load(tidyverse, lubridate, knitr, dplyr, readxl)
+
+
+
+alloc <- read_csv("data/Ukraine_Aid/Financial Allocations.csv")
+commit <- read_csv("data/Ukraine_Aid/Financial Commitments.csv")
+
+# Merge the data sets based on country name and EU_membership status
+aid_data_without_EU <-left_join(alloc, commit, by = c("Country", "EU member"), suffix = c("_allocation", "_commitment"))
+aid_data <- full_join(alloc, commit, by = c("Country", "EU member"), suffix = c("_allocation", "_commitment"))
+# note that EU (Commission and Council) only exists in the commit data set, which is why I used full_join to not 
+#   drop that 
+
+```
+
+
+<!-- ############################## -->
+<!-- # Start Writing here: -->
+<!-- ############################## -->
+
+# Introduction \label{Introduction}
+This report shows some rough insights into the Russia-Ukraine war, and specifically analyses aid provided by countries in the EU. The report focuses on whether the countries have kept their promises/ comitmments in providing allocation. A focus lies on the commitment gap, which shows whether the countries have pledged more aid than they have actually provided. 
+
+# Data 
+The data used is on aid commitments and allocation. In the analysis, I focus on EU-member-countries and their commitments and actual allocations.  
+
+
+# Analysis
+Let us first have a look at the relationship between GDP in 2021 and total bilateral aid allocations. In general, one would expect a positive relationship, which means that economically better off countries allocate more.
+```{r Figure1,  warning =  FALSE, fig.align = 'center', fig.cap = "Who allocates Aid \\label{Figure1}", fig.ext = 'png', fig.height = 3, fig.width = 6}
+source("code/Comparison_Allocation_GDP.R")
+# Function to compare bilateral allocations and commitments for EU members and analyze with GDP
+Graph <- scatter_plot_fct(data=aid_data, title="Relationship between GDP in 2021 and Total Bilateral Allocations")
+Graph
+
+```
+It seems that there is a general positive relationship between GDP in 2021 and total bilateral aid.
+
+Nevertheless, one might be interested in whether the countries actually allocated as much aid as they comitted initially. 
+
+```{r Figure2, warning =  FALSE, fig.align = 'center', fig.cap = "Commitment Gap \\label{Figure2}", fig.height = 3, fig.width = 6, dev = 'png'}
+source("code/Comparison_Commitment_Allocation.R")
+Comparison <- compare_eu_countries(data=aid_data, top_n=3)
+Comparison
+
+```
+The difference between allocations and commitment should be 0 if countries allocated the same amount of money they actually committed to. However, for some countries the difference is either greater and smaller than 0. This graph shows the top 3 countries with greatest negative and positive difference. Germany has the biggest committment gap. This means that they committed to a much larger sum of total aid as compared to their actuall aid allocation in $billion. The same holds for Denmark and the Netherlands. Estonia, France and Bulgaria actually allocated more than they committed.
+
+In a next step, this report checks whether there is a correlation between Commitment Gap and GDP 
+```{r Figure3,  warning =  FALSE, fig.align = 'center', fig.cap = "Commitment Gap and GDP \\label{Figure3}", fig.ext = 'png', fig.height = 3, fig.width = 6}
+source("code/Comparison_Commitment_Allocation_GDP.R")
+Comparison2 <- compare_diff_GDP(data=aid_data, title= "Difference between Allocations and Commitments vs GDP")
+Comparison2
+
+```
+Now, we can see that the relationship between the commitment gap and GDP in 2021 is negative. This can be interpreted as that countries with higher GDP have a larger commitment gap, which means that they actually allocated less than they committed and the correlation seems relatively strong. However, one has to acknowledge the large variation in the data, especially with increasing GDP and that most data points are on the left of the graph.
+
+# Conclusion
+In conclusion, some countries have kept their promises and endeavored to do enough to stem the tide of war. Although, economically better off countries seem to allocate in general more (see \ref{Figure1}), when looking at the difference between commitment and actual allocation, they do not seem to keep there promieses (see \ref{Figure3}). Especially countries with a higher GDP in 2021 (in $billion), have not honored their original pledges and have provided less funding, meaning that there is a commitment gap for these countries. 
+
+
+
+
+
+

@@ -1,0 +1,158 @@
+---
+# IMPORTANT: Change settings here, but DO NOT change the spacing.
+# Remove comments and add values where applicable.
+# The descriptions below should be self-explanatory
+
+title: "Baby Names in the US"
+#subtitle: "This will appear as Right Header"
+
+documentclass: "elsarticle"
+
+# --------- Thesis title (Optional - set to FALSE by default).
+# You can move the details below around as you please.
+Thesis_FP: FALSE
+# Entry1: "An unbelievable study with a title spanning multiple lines."
+# Entry2: "\\textbf{Some Guy}" # textbf for bold
+# Entry3: "A thesis submitted toward the degree of Doctor of Philosophy"
+# Uni_Logo: Tex/Logo.png # Place a logo in the indicated location (from your root, e.g. defaults to ~/Tex/Logo.png) and uncomment this line. Leave uncommented for no image
+# Logo_width: 0.3 # If using a logo - use this to set width (size) of image
+# Entry4: "Under the supervision of: \\vfill Prof. Joe Smith and Dr. Frank Smith"
+# Entry5: "Stellenbosch University"
+# Entry6: April 2020
+# Entry7:
+# Entry8:
+
+# --------- Front Page
+# Comment: ----- Follow this pattern for up to 5 authors
+AddTitle: TRUE # Use FALSE when submitting to peer reviewed platform. This will remove author names.
+Author1: "Anna Mayer"  # First Author - note the thanks message displayed as an italic footnote of first page.
+Ref1: "Stellenbosch University" # First Author's Affiliation
+Email1: "28776534\\@sun.ac.za" # First Author's Email address
+
+
+#CorrespAuthor_1: FALSE  # If corresponding author is author 3, e.g., use CorrespAuthor_3: TRUE
+
+# Comment out below to remove both. JEL Codes only given if keywords also given.
+keywords: "Baby Names" # Use \\sep to separate
+#JELCodes: "L250 \\sep L100"
+
+# ----- Manage headers and footers:
+#BottomLFooter: $Title$
+#BottomCFooter:
+#TopLHeader: \leftmark # Adds section name at topleft. Remove comment to add it.
+BottomRFooter: "\\footnotesize Page \\thepage" # Add a '#' before this line to remove footer.
+addtoprule: TRUE
+addfootrule: TRUE               # Use if footers added. Add '#' to remove line.
+
+# --------- page margins:
+margin: 2.3 # Sides
+bottom: 2 # bottom
+top: 2.5 # Top
+HardSet_layout: TRUE # Hard-set the spacing of words in your document. This will stop LaTeX squashing text to fit on pages, e.g.
+# This is done by hard-setting the spacing dimensions. Set to FALSE if you want LaTeX to optimize this for your paper.
+
+# --------- Line numbers
+linenumbers: FALSE # Used when submitting to journal
+
+# ---------- References settings:
+# You can download cls format here: https://www.zotero.org/ - simply search for your institution. You can also edit and save cls formats here: https://editor.citationstyles.org/about/
+# Hit download, store it in Tex/ folder, and change reference below - easy.
+bibliography: Tex/ref.bib       # Do not edit: Keep this naming convention and location.
+csl: Tex/harvard-stellenbosch-university.csl # referencing format used.
+# By default, the bibliography only displays the cited references. If you want to change this, you can comment out one of the following:
+#nocite: '@*' # Add all items in bibliography, whether cited or not
+# nocite: |  # add specific references that aren't cited
+#  @grinold2000
+#  @Someoneelse2010
+
+# ---------- General:
+RemovePreprintSubmittedTo: TRUE  # Removes the 'preprint submitted to...' at bottom of titlepage
+#Journal: "Journal of Finance"   # Journal that the paper will be submitting to, if RemovePreprintSubmittedTo is set to TRUE.
+toc: FALSE                       # Add a table of contents
+numbersections: TRUE             # Should sections (and thus figures and tables) be numbered?
+fontsize: 11pt                  # Set fontsize
+linestretch: 1.2                # Set distance between lines.
+link-citations: TRUE            # This creates dynamic links to the papers in reference list.
+
+### Adding additional latex packages:
+# header-includes:
+#    - \usepackage{colortbl} # Add additional packages here.
+
+output:
+  pdf_document:
+    keep_tex: TRUE
+    template: Tex/TexDefault.txt
+    fig_width: 3.5 # Adjust default figure sizes. This can also be done in the chunks of the text.
+    fig_height: 3.5
+abstract: |
+  Analysis of past and current trends in baby names in the US and factors that influenced choices over time.
+---
+
+<!-- First: Set your default preferences for chunk options: -->
+
+<!-- If you want a chunk's code to be printed, set echo = TRUE. message = FALSE stops R printing ugly package loading details in your final paper too. I also suggest setting warning = FALSE and checking for warnings in R, else you might find ugly warnings in your paper. -->
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, fig.width = 6, fig.height = 5, fig.pos="H", fig.pos = 'H')
+library(pacman)
+p_load(tidyverse, lubridate, knitr, dplyr, readxl)
+list.files('Question1/code/', full.names = T, recursive = T) %>% .[grepl('.R', .)] %>% as.list() %>% walk(~source(.))
+
+```
+
+
+<!-- ############################## -->
+<!-- # Start Writing here: -->
+<!-- ############################## -->
+
+# Introduction \label{Introduction}
+This analysis focuses on baby name trends, how they persist over time and which factors are influencing parents decision in naming their children across the past decades. 
+
+
+# Data 
+The data used for this analysis is mainly a list of baby names form 1910 to 2014. Moreover, for the factor analysis, a closer look was taken into data on HBO titles and charts. 
+
+# Analysis 
+Firstly, this report tried to determine how well popular names persist into the future using the Spearman rank correlation. More specifically,the Spearman rank correlation of the top 25 boys' and girls' names for each year with the subsequent three years was calculated and then plotted in \ref{Figure1} below.
+```{r Figure1,  warning =  FALSE, fig.align = 'center', fig.cap = "Persistence of Baby Names over Time \\label{Figure1}", fig.ext = 'png', fig.height = 3, fig.width = 6}
+Baby_Names <- readRDS("data/US_Baby_names/Baby_Names_By_US_State.rds")
+source("code/Spearman_Corr.R")
+spearman_corr <- calculate_and_plot_correlations(data=Baby_Names) 
+spearman_corr
+```
+Note that the scale on the y-axis ranges from 0.5 to 1.
+
+Especially in the 1960s, female names do not seem to be correlated. However, until 1950, there
+seems to be a correlation for both male and female baby names. In general, there seems to be a 
+slight downward trend, meaning that past 3 years baby names do not seem to be as positively correlated
+as in the beginning of the 20th century. Nevertheless, the coefficient is still relatively high for both genders. 
+One can conclude from this graph, that popular baby names still persist until today, although there is a small downward trend. As mentioned, the reason for this is that the average correlation coefficient (averaged for following  3 years) is still high even after 1990 for both genders. Given the long-term trend, one can expect this persistence with a potentially continuing very small downward trend for the future. 
+
+In a next step, this report focuses on factors influencing the choice of baby names. For this, please find below the year-on-year percentage change for the three names Krystle, Khaleesi and Neymar:
+```{r Figure2, warning =  FALSE, fig.align = 'center', fig.cap = "Surges in Baby Names \\label{Figure2}", fig.height = 3, fig.width = 6, dev = 'png'}
+source("code/Surges.R")
+surges <- identify_year_on_year_surges(data=Baby_Names, percent_change=2000) 
+source("code/Visualize_surges.R")
+visualization <- visualize_surges(data=surges, names_to_highlight=c("Neymar", "Krystle", "Khaleesi", "Mallory")) 
+visualization
+
+
+```
+Interestingly, in 2012, there was an increase of 2010 % of the name Khaleesi (from 5 to 110). This is most likely related to Game of Thrones (which was according to the HBO_Titles data set released in 2011). Game of Thrones, with an audience popularity score of 492.101 became very famous very quickly and probably influenced the naming decisions of many parents.  Moreover, looking at the surges data, one can see that in 2011, the name Neymar experienced an increase of 2700\%, which might be related to Neymar's starting his professional soccer career back in 2009 (@caioli2017neymar).In 1981, Krystle got a spike with 6816 \%. This is most likely related to Krystle Carrington, a fictional character from the 1980s American TV series Dynasty. Also Mallory experienced a strong increase in the 1983 which is probably related to the sitcom Family Ties and one of the main characters names Mallory Keaton in 1982. 
+
+From this, one can see, that different factors influence baby names, from soccer players to sitcoms to movies or tv-shows. 
+
+# Conclusion
+There is persistence over time in baby names, which could be clearly seen in \ref{Figure1}.Therefore, sticking to classical popular baby names like Mary, James, Lisa, etc. might be a good idea for toys. However, there are also factors that lead to spikes in the appearance of more unusual baby names such as Khaleesi, Krystle, Neymar etc. This could be taken into account. Current, popular TV shows, soccer players etc. influence the choice of parents with respect to naming their babies and therefore could also serve as good names for toys. However, this comes with the cost of changing toys names once in a while, as trends are changing with new tv shows and people becoming famous.
+
+For further research on traditional, persisting names, one could have a closer look into bible names data, for example using Hitchcock's Bible Names Dictionary. Since religion probably still influence the decision of many parents in naming their children. A list and analysis can be provided on request from me. 
+
+
+\newpage
+
+# References {-}
+
+<div id="refs"></div>
+
+
+

@@ -1,0 +1,414 @@
+---
+output:
+  md_document:
+    variant: markdown_github
+---
+# Exam Data Science
+Student number 28776534
+
+I created this project in an empty folder called 28776534 using the fmxdat::make_project(Open=T) command. 
+General note: Most interpretations, especially detailed interpretations can be found in the pdf documents created with Texevier.
+
+More detailed code explanations can be found in the codes for the functions. 
+
+```{r}
+
+rm(list = ls()) # Clean your environment:
+gc() # garbage collection - It can be useful to call gc after a large object has been removed, as this may prompt R to return memory to the operating system.
+library(pacman)
+p_load(tidyverse, lubridate, knitr, dplyr, readxl)
+
+list.files('code/', full.names = T, recursive = T) %>% .[grepl('.R', .)] %>% as.list() %>% walk(~source(.))
+```
+
+Create folders + Texevier files for the 5 questions:
+
+```{r}
+Texevier::create_template(directory = "D:/Uni_Stellenbosch/Data_Science/28776534",
+                          template_name = "Question1",
+                          build_project = F, open_project = F)
+Texevier::create_template(directory = "D:/Uni_Stellenbosch/Data_Science/28776534",
+                          template_name = "Question2",
+                          build_project = F, open_project = F)
+Texevier::create_template(directory = "D:/Uni_Stellenbosch/Data_Science/28776534",
+                          template_name = "Question3",
+                          build_project = F, open_project = F)
+Texevier::create_template(directory = "D:/Uni_Stellenbosch/Data_Science/28776534",
+                          template_name = "Question4",
+                          build_project = F, open_project = F)
+Texevier::create_template(directory = "D:/Uni_Stellenbosch/Data_Science/28776534",
+                          template_name = "Question5",
+                          build_project = F, open_project = F)
+
+```
+
+
+# Question 1:
+
+Initial Settings + Load Data 
+```{r}
+list.files('Question1/code/', full.names = T, recursive = T) %>% .[grepl('.R', .)] %>% as.list() %>% walk(~source(.))
+
+# As the Population_data was not provided in the data folder, I downloaded it from the website that was
+#  mentioned in the txt.file. (https://data.world/bob-burggraaf/population-by-city-in-usa)
+# Also as the files provided were RDS files and not csv, I changed that in the code.
+
+Baby_Names <- readRDS("Question1/data/US_Baby_names/Baby_Names_By_US_State.rds")
+charts <- readRDS("Question1/data/US_Baby_names/charts.rds")
+#Population_data <- read_excel("Question1/data/US_Baby_names/Total_Population_By_City_Acs_2015_5_E_AgeSex.xlsx")
+HBO_Titles <- readRDS("Question1/data/US_Baby_names/HBO_titles.rds")
+HBO_Credits <- readRDS("Question1/data/US_Baby_names/HBO_credits.rds")
+
+
+#Additional data source: Religion might also determine the baby name: 
+# I found a data set listing typical regligious names in the data set "Hitchcocks Bible Dictionary"
+library("httr")
+GET("https://query.data.world/s/c7jlg53cop4hktqsqugcfeo53r2buh?dws=00000", write_disk(tf <- tempfile(fileext = ".xlsx")))
+Bible_Names <- read_excel(tf) 
+
+```
+
+
+General insights into baby naming trends between 1910-2014 
+- Top 25 Baby Names
+- Spearman rank correlation - Baby names persistence over Time 
+```{r}
+# First extracting the top 25 baby names
+source("Question1/code/Top_Baby_Names.R")
+Top25BabyNames <- extract_top_n_names(data=Baby_Names, top_n=25)
+Top25BabyNames
+
+source("Question1/code/Spearman_Corr.R")
+spearman_corr <- calculate_and_plot_correlations(data=Baby_Names) 
+spearman_corr
+```
+Note:
+Especially in the 1960s, female names do not seem to be correlated. However, until 1950, there
+seems to be a correlation for both male and female baby names. Please find more interpretations in the PDF.
+
+
+Factors influencing baby names
+```{r}
+#Looking for spikes in baby names 
+source("Question1/code/Surges.R")
+surges <- identify_year_on_year_surges(data=Baby_Names, percent_change=2000) 
+surges
+# interestingly, in 2012, there was an increase of 2010 % of the name Khaleesi (from 5 to 110)
+# My theory is that this must be related to Game of Thrones (which was according to the HBO_Titles dataset released in 2012)
+game_of_thrones_popularity <- HBO_Titles %>%
+  filter(title == "Game of Thrones") %>%
+  select(title, tmdb_popularity, release_year)
+game_of_thrones_popularity
+
+#Vizualizing the surges:
+source("Question1/code/Visualize_surges.R")
+visualization <- visualize_surges(data=surges, names_to_highlight=c("Neymar", "Krystle", "Khaleesi", "Mallory")) 
+visualization
+```
+More detailed interpretations can be found in the PDF document for Question 1
+
+
+
+
+# Question 2 Music Taste:
+
+Initial Settings + Data Loading + First Cleaning
+```{r}
+list.files('Question2/code/', full.names = T, recursive = T) %>% .[grepl('.R', .)] %>% as.list() %>% walk(~source(.))
+
+#Data Loading
+# Note that spotify dataset and billboard_100 were provided as RDS files.
+coldplay <- read_csv("Question2/data/Coldplay_vs_Metallica/Coldplay.csv")
+metallica <- read_csv("Question2/data/Coldplay_vs_Metallica/metallica.csv")
+spotify <- readRDS("Question2/data/Coldplay_vs_Metallica/Broader_Spotify_Info.rds")
+billboard_100 <- readRDS("Question2/data/Coldplay_vs_Metallica/charts.rds")
+
+```
+```{r}
+# Filter out live recordings for direct comparisons
+suppressWarnings({
+coldplay_studio <- coldplay[!grepl('Live', coldplay$name, ignore.case = TRUE), ] %>%
+    mutate(release_year = as.numeric(format(as.Date(release_date), "%Y")))
+
+metallica_studio <- metallica[!grepl('Live', metallica$name, ignore.case = TRUE), ] %>%
+        mutate(release_year = as.numeric(format(as.Date(release_date), "%Y")))
+
+billboard_100_studio <- billboard_100[!grepl('Live', billboard_100$song, ignore.case = TRUE), ] 
+
+spotify_studio <- spotify[!grepl('Live', spotify$name, ignore.case = TRUE), ] 
+}) 
+
+```
+
+
+Comparing average popularity of the two bands over time
+```{r}
+library(ggplot2)
+source("Question2/code/Popularity.R")
+plot_popularity_over_time(data_coldplay=coldplay_studio, data_metallica=metallica_studio)
+# Coldplay only exists since 1997 -> explains why graph for Coldplay starts so late
+```
+
+Popularity by Album for each band, Metallica and Coldplay
+```{r}
+source("Question2/code/Album_popularity_Metallica.R")
+plot_Metallica <- create_boxplot_Metallica(data=metallica_studio, title="Popularity by album - Metallica")
+plot_Metallica
+
+source("Question2/code/Album_popularity_Coldplay.R")
+plot_Coldplay <- create_boxplot_Coldplay(data=coldplay_studio, title="Popularity by album - Coldplay")
+plot_Coldplay
+```
+
+How often were Coldplay and Metallica in the top 100 Billboard charts (excluding features) + comparison with band/singer that has most top 10 rankings?
+```{r}
+source("Question2/code/Billboard_Top_10.R")
+plot_top10_mentions(data=billboard_100_studio, artist1 = "Coldplay", artist2 = "Metallica")
+
+# As compared total appearances in top 100 for Coldplay and Metallica:
+Coldplay_mentions <- billboard_100_studio %>%
+    filter(artist == "Coldplay")
+    
+Metallica_mentions <- billboard_100_studio %>%
+    filter(artist == "Metallica") 
+    
+Coldplay_total_count <- nrow(Coldplay_mentions)
+Metallica_total_count <- nrow(Metallica_mentions)
+Coldplay_total_count # 281 times ranked in top 100
+Metallica_total_count # 197 times ranked in top 100
+```
+Finally, using spotify data set to compare and analyse how valence for the two bands developed over time
+```{r}
+source("Question2/code/Valence.R")
+plot_valence <- plot_valence_over_time(data=spotify_studio)
+plot_valence
+```
+Detailed interpretations for this can again be found in the PDF document
+
+
+
+# Question 3 - Ukraine-Russia Conflict:
+
+Initial settings
+```{r}
+list.files('Question3/code/', full.names = T, recursive = T) %>% .[grepl('.R', .)] %>% as.list() %>% walk(~source(.))
+```
+
+Load Data sets:
+```{r}
+alloc <- read_csv("Question3/data/Ukraine_Aid/Financial Allocations.csv")
+commit <- read_csv("Question3/data/Ukraine_Aid/Financial Commitments.csv")
+
+# Merge the data sets based on country name and EU_membership status
+aid_data_without_EU <-left_join(alloc, commit, by = c("Country", "EU member"), suffix = c("_allocation", "_commitment"))
+aid_data <- full_join(alloc, commit, by = c("Country", "EU member"), suffix = c("_allocation", "_commitment"))
+# note that EU (Commission and Council) only exists in the commit data set, which is why I used full_join to not 
+#   drop that 
+```
+
+Having a general look at the relationship between GDP in 2021 and total aid allocations by country
+```{r}
+source("Question3/code/Comparison_Allocation_GDP.R")
+# Function to compare bilateral allocations and commitments for EU members and analyze with GDP
+Graph <- scatter_plot_fct(data=aid_data, title="Relationship between GDP in 2021 and Total Bilateral Allocations")
+Graph
+```
+
+
+Comparing for EU member countries the commitments vs allocation (calculating the difference)
+"Commitment gap"
+```{r}
+source("Question3/code/Comparison_Commitment_Allocation.R")
+Comparison <- compare_eu_countries(data=aid_data, top_n=3)
+Comparison
+```
+Should be 0 if countries allocated the same amount of money they actually commited to. For those countries
+with negative numbers -> Commitments > Allocations 
+
+
+Now looking at the difference, we might want to check again how the difference is correlated with GDP
+```{r}
+source("Question3/code/Comparison_Commitment_Allocation_GDP.R")
+Comparison2 <- compare_diff_GDP(data=aid_data, title= "Difference between Allocations and Commitments vs GDP")
+Comparison2
+```
+The higher GDP the more negative is the difference which means that countries with a higher GDP seem to have
+made higher commitments than actual allocations. However, one must note, that there is a large variance with increasing GDP. Richest countries have the biggest commitment gap. 
+
+Detailed interpretations can be found in the according pdf created with Texevier.
+
+
+
+# Question 4 - Olympics:
+Initial settings
+```{r}
+list.files('Question4/code/', full.names = T, recursive = T) %>% .[grepl('.R', .)] %>% as.list() %>% walk(~source(.))
+
+```
+
+Load Data 
+Note: The files that were given are RDS files.
+```{r}
+Winter <- readRDS("Question4/data/olympics/winter.rds")
+Summer <- readRDS("Question4/data/olympics/summer.rds")
+GDP <- readRDS("Question4/data/olympics/GDP.rds")
+```
+
+
+How has India faired in past summer Olympics compared to similarly sized economies, to
+other emerging market economies and also select South American countries?
+```{r}
+#Merging the data (Summer and GDP)
+Summer_GDP <- left_join(Summer, GDP, by = c("Country" = "Code"))
+#create a vector with in total 10 emerging countries having a relatively similar GDP per Capita as India
+#  from different continents/ can also be considered as emerging countries
+emerging_country_vector <- c("IND", "KEN", "PAK", "UKR", "COL", "INA", "JAM", "ETH", "GEO", "RSA")
+subset_Summer_GDP <- Summer_GDP %>%
+  filter(Country %in% emerging_country_vector)
+```
+Since there are no observations for many Latin American countries, that have a relatively similar GDP as India,
+I chose the following tow: Jamaica and Colombia. 
+```{r}
+source("Question4/code/India.R")
+Plot <- Medals_India(data=subset_Summer_GDP)
+Plot
+```
+India has thick green line - mainly won Hockey, which is a team sport -> which is why so low. 
+
+
+Which countries have been most dominant in both Winter and Summer Olympics over
+time? Maybe show some time-series analyses of a few countries side-by-side.
+```{r}
+source("Question4/code/Succesful_countries_Summer.R")
+Plot_Summer <- plot_medals_summer(data=Summer)
+Plot_Summer
+
+source("Question4/code/Succesful_countries_Winter.R")
+Plot_Winter <- plot_medals_winter(data=Winter)
+Plot_Winter
+```
+There is probably a bias cause could not account for all team sports in the data. 
+
+
+Which countries best punch above their weight when it comes to winning medals (however
+you define this)?
+Using the Population variable from the GDP data set
+
+Winter Olympics
+```{r}
+Winter_GDP <- left_join(Winter, GDP, by = c("Country" = "Code"))
+source("Question4/code/Winter_Gold.R")
+gold_medals_per_capita_winter <- gold_medals_winter(data=Winter_GDP)
+gold_medals_per_capita_winter
+```
+
+Summer Olympics
+```{r}
+source("Question4/code/Summer_Gold.R")
+gold_medals_per_capita_summer <- gold_medals_summer(data=Summer_GDP)
+gold_medals_per_capita_summer
+```
+
+
+Which is your personal favourite event at the Olympics? Show some interesting analyses
+on past winners / countries related to your chosen event
+I generally prefer Winter Olympics -Alpine Skiing (Slalom) 
+
+```{r}
+source("Question4/code/Alpine_Skiing.R")
+Top_Athletes <- Alpine_Skiing(data=Winter)
+Top_Athletes
+```
+
+Detailed descriptions and interpretations can be found in the pdf
+
+
+
+# Question 5 - SQL database: 
+Initial settings + Renviron
+```{r}
+list.files('Question5/code/', full.names = T, recursive = T) %>% .[grepl('.R', .)] %>% as.list() %>% walk(~source(.))
+usethis::edit_r_environ()
+# restart R
+
+```
+# Loading data + libraries + settings
+```{r}
+library(tidyverse)
+library(dbbasic)
+library(tidytext)
+library(quanteda)
+library(topicmodels)
+list.files('Question5/code/', full.names = T, recursive = T) %>% .[grepl('.R', .)] %>% as.list() %>% walk(~source(.))
+conn <- db_connect(db = "psql_datascience")
+DBI::dbDisconnect(conn)
+
+retailer <- db_query("SELECT * FROM retailer;", db = "psql_datascience")  
+statssa <- db_query("SELECT * FROM statssa;", db = "psql_datascience")  
+
+```
+
+Data Cleaning + Filtering 
+```{r}
+# vector with braai ingredients
+ingredients <- c("bread", "cheese", "margarine", "tomatoes", "onions", "salt", "chutney")
+
+retailer_filtered <- retailer %>% 
+  filter(category %in% ingredients) 
+
+statssa_filtered <- statssa %>% 
+  filter(grepl("white bread|cheddar|margarine|tomatoes|onions|salt|chutney", type, ignore.case = TRUE)) %>%
+    mutate(ingredient = str_to_lower(str_extract(type, "white bread|cheddar|margarine|tomatoes|onions|salt|chutney|Tomatoes|Onions|Salt|Chutney|White bread|Cheddar|Margarine"))) %>%
+    filter(date >= as.Date("2020-03-29"))  
+# Filter for observations starting from 2020-03-29 to align with retailer data!!
+## also made everything to lower case so it is like category variable 
+```
+
+
+Retailer Index: 
+# first I calculated the index (using monthly price averages). The base price is the first months average, as the data would be too noisy if used on a daily basis. 
+Then I plotted the index over time.
+More details can be found in the code itself. 
+
+```{r}
+source("Question5/code/Retailer.R")
+retailer_plot <- retailer_plot_fct(data=retailer_filtered)
+retailer_plot
+
+```
+
+Stats SA Analysis
+# first I calculated the index (using monthly price averages). The base price is the first months average, as the data would be too noisy if used on a daily basis. 
+Then I plotted the index over time. 
+More details can be found in the code itself. 
+```{r}
+source("Question5/code/StatsSA.R")
+statssa_plot <- statssa_plot_fct(data=statssa_filtered)
+statssa_plot
+```
+
+
+B - basic summary statistics and comparison of the two data sets:
+
+Having a look at summary statistics, in particular mean prices of different products in the two different data sets
+```{r}
+source("Question5/code/summary_stats.R")
+plot <- plot_summary_stats(data1=retailer_filtered, data2=statssa_filtered)
+plot
+```
+
+Having a look at average monthly tomato prices in the two different data sets: 
+
+```{r}
+source("Question5/code/tomatoe_prices.R")
+plot <- plot_monthly_tomato_prices(data1=retailer_filtered, data2=statssa_filtered)
+plot
+```
+Note!
+Retailer calculates tomato prices per kg 
+no quantity mentioned for statssa data
+
+
+
+
+# end of ReadMe file

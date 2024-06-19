@@ -1,0 +1,214 @@
+---
+# IMPORTANT: Change settings here, but DO NOT change the spacing.
+# Remove comments and add values where applicable.
+# The descriptions below should be self-explanatory
+
+title: "Insights Into the History of the Olympic Games"
+#subtitle: "This will appear as Right Header"
+
+documentclass: "elsarticle"
+
+# --------- Thesis title (Optional - set to FALSE by default).
+# You can move the details below around as you please.
+Thesis_FP: FALSE
+# Entry1: "An unbelievable study with a title spanning multiple lines."
+# Entry2: "\\textbf{Some Guy}" # textbf for bold
+# Entry3: "A thesis submitted toward the degree of Doctor of Philosophy"
+# Uni_Logo: Tex/Logo.png # Place a logo in the indicated location (from your root, e.g. defaults to ~/Tex/Logo.png) and uncomment this line. Leave uncommented for no image
+# Logo_width: 0.3 # If using a logo - use this to set width (size) of image
+# Entry4: "Under the supervision of: \\vfill Prof. Joe Smith and Dr. Frank Smith"
+# Entry5: "Stellenbosch University"
+# Entry6: April 2020
+# Entry7:
+# Entry8:
+
+# --------- Front Page
+# Comment: ----- Follow this pattern for up to 5 authors
+AddTitle: TRUE # Use FALSE when submitting to peer reviewed platform. This will remove author names.
+Author1: "Anna Mayer"  # First Author - note the thanks message displayed as an italic footnote of first page.
+Ref1: "Stellenbosch Unviersity" # First Author's Affiliation
+Email1: "28776534\\@sun.ac.za" # First Author's Email address
+
+
+#CorrespAuthor_1: TRUE  # If corresponding author is author 3, e.g., use CorrespAuthor_3: TRUE
+
+# Comment out below to remove both. JEL Codes only given if keywords also given.
+keywords: "Olympics \\sep Summer \\sep Winter" # Use \\sep to separate
+#JELCodes: "L250 \\sep L100"
+
+# ----- Manage headers and footers:
+#BottomLFooter: $Title$
+#BottomCFooter:
+#TopLHeader: \leftmark # Adds section name at topleft. Remove comment to add it.
+BottomRFooter: "\\footnotesize Page \\thepage" # Add a '#' before this line to remove footer.
+addtoprule: TRUE
+addfootrule: TRUE               # Use if footers added. Add '#' to remove line.
+
+# --------- page margins:
+margin: 2.3 # Sides
+bottom: 2 # bottom
+top: 2.5 # Top
+HardSet_layout: TRUE # Hard-set the spacing of words in your document. This will stop LaTeX squashing text to fit on pages, e.g.
+# This is done by hard-setting the spacing dimensions. Set to FALSE if you want LaTeX to optimize this for your paper.
+
+# --------- Line numbers
+linenumbers: FALSE # Used when submitting to journal
+
+# ---------- References settings:
+# You can download cls format here: https://www.zotero.org/ - simply search for your institution. You can also edit and save cls formats here: https://editor.citationstyles.org/about/
+# Hit download, store it in Tex/ folder, and change reference below - easy.
+bibliography: Tex/ref.bib       # Do not edit: Keep this naming convention and location.
+csl: Tex/harvard-stellenbosch-university.csl # referencing format used.
+# By default, the bibliography only displays the cited references. If you want to change this, you can comment out one of the following:
+#nocite: '@*' # Add all items in bibliography, whether cited or not
+# nocite: |  # add specific references that aren't cited
+#  @grinold2000
+#  @Someoneelse2010
+
+# ---------- General:
+RemovePreprintSubmittedTo: TRUE  # Removes the 'preprint submitted to...' at bottom of titlepage
+#Journal: "Journal of Finance"   # Journal that the paper will be submitting to, if RemovePreprintSubmittedTo is set to TRUE.
+toc: FALSE                       # Add a table of contents
+numbersections: TRUE             # Should sections (and thus figures and tables) be numbered?
+fontsize: 11pt                  # Set fontsize
+linestretch: 1.2                # Set distance between lines.
+link-citations: TRUE            # This creates dynamic links to the papers in reference list.
+
+### Adding additional latex packages:
+# header-includes:
+#    - \usepackage{colortbl} # Add additional packages here.
+
+output:
+  pdf_document:
+    keep_tex: TRUE
+    template: Tex/TexDefault.txt
+    fig_width: 3.5 # Adjust default figure sizes. This can also be done in the chunks of the text.
+    fig_height: 3.5
+abstract: |
+ With the upcoming Summer Olympics in Paris, who is not interested in having a closer look into the history of summer but also winter Olympics and the different success stories of athletes, countries and specifically India.
+---
+
+<!-- First: Set your default preferences for chunk options: -->
+
+<!-- If you want a chunk's code to be printed, set echo = TRUE. message = FALSE stops R printing ugly package loading details in your final paper too. I also suggest setting warning = FALSE and checking for warnings in R, else you might find ugly warnings in your paper. -->
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, fig.width = 6, fig.height = 5, fig.pos="H", fig.pos = 'H')
+
+library(pacman)
+p_load(tidyverse, lubridate, knitr, dplyr, readxl)
+
+#Data Loading + wrangling
+Winter <- readRDS("data/olympics/winter.rds")
+Summer <- readRDS("data/olympics/summer.rds")
+GDP <- readRDS("data/olympics/GDP.rds")
+
+#Merging the data (Summer and GDP)
+Summer_GDP <- left_join(Summer, GDP, by = c("Country" = "Code"))
+#create a vector with in total 10 emerging countries having a relatively similar GDP per Capita as India
+#  from different continents/ can also be considered as emerging countries
+emerging_country_vector <- c("IND", "KEN", "PAK", "UKR", "COL", "INA", "JAM", "ETH", "GEO", "RSA")
+subset_Summer_GDP <- Summer_GDP %>%
+  filter(Country %in% emerging_country_vector)
+Winter_GDP <- left_join(Winter, GDP, by = c("Country" = "Code"))
+
+
+```
+
+
+<!-- ############################## -->
+<!-- # Start Writing here: -->
+<!-- ############################## -->
+
+# Introduction \label{Introduction}
+With the upcoming Summer Olympics starting on July 26 in Paris, France, the general interst is rising again with regards to past Olympics, trends and the greatest athletes of all times. This news report will dig deeper into past Summer and Winter Olympics and analyse the performance of different countries, with particular focus on India and their successes. To keep it as brief and accessible as possible, the main part of this news report will be in bullet points. 
+
+# Data 
+*  The data used for this analysis is threefold: 
+      + Data on Winter Olympic Games
+      + Data on Summer Olympic Games 
+      + General GDP and population size data
+
+# Analysis
+## India's performance compared to other countries
+*  India's performance in past summer Olympics compared to similarly sized economies 
+ (including South America)
+ 
+      +  Chose countries with relatively similar GDP per Capita that also 
+         participated in past Summer Olympics
+      +  Countries from South America: For example: Colombia
+
+
+```{r Figure1,  warning =  FALSE, fig.align = 'center', fig.cap = "Medals Table for Emerging Country over Time \\label{Figure1}", fig.ext = 'png', fig.height = 3, fig.width = 6}
+
+source("code/India.R")
+Plot <- Medals_India(data=subset_Summer_GDP)
+Plot
+
+```
+* Potential explanation for India's performance over time:
+    + Main medals won in Hockey
+    + Only assigned one medal for the whole team for a medal won in a team sport discipline during the Olympics 
+
+
+## Dominant countries in Summer Olympics over time 
+```{r Figure2, warning =  FALSE, fig.align = 'center', fig.cap = "Top Countries Summer Olympics \\label{Figure2}", fig.height = 3, fig.width = 6, dev = 'png'}
+
+source("code/Succesful_countries_Summer.R")
+Plot_Summer <- plot_medals_summer(data=Summer)
+Plot_Summer
+```
+* US generally strong over time in Summer Olympics
+* Former Soviet Union also tended to be strong in Summer Olympics
+
+## Dominant countries in Winter Olympics over time 
+```{r Figure3, warning =  FALSE, fig.align = 'center', fig.cap = "Top Countries Winter Olympics \\label{Figure3}", fig.height = 3, fig.width = 6, dev = 'png'}
+
+source("code/Succesful_countries_Winter.R")
+Plot_Winter <- plot_medals_winter(data=Winter)
+Plot_Winter
+
+```
+* US generally also strong in Winter Olympics
+* Generally northern countries with snow/ mountains more successful (which intuitively makes sense)
+* Former Soviet Union was also strong in Winter Olympics. Logically not anymore today, as it does not exist anymore.
+* Note that in the last two graphs there might be a bias, as I could not account for all the team sports in the data
+
+## Gold per Capita Summer Olympics 
+```{r Figure4, warning =  FALSE, fig.align = 'center', fig.cap = "Gold per Capita Summer Olympics \\label{Figure4}", fig.height = 3, fig.width = 6, dev = 'png'}
+source("code/Summer_Gold.R")
+gold_medals_per_capita_summer <- gold_medals_summer(data=Summer_GDP)
+gold_medals_per_capita_summer
+
+```
+* Hungary most gold medals per Capita 
+    + Followed by countries that as well do not have a big population which explains the result compared to for example the US
+
+## Gold per Capita Winter Olympics
+```{r Figure5, warning =  FALSE, fig.align = 'center', fig.cap = "Gold per Capita Winter Olympics \\label{Figure5}", fig.height = 3, fig.width = 6, dev = 'png'}
+source("code/Winter_Gold.R")
+gold_medals_per_capita_winter <- gold_medals_winter(data=Winter_GDP)
+gold_medals_per_capita_winter
+
+```
+* Interestingly Liechtenstein most gold medals per Capita
+   + But makes sense as not a lot of inhabitants
+   + Countries that follow also not extremely populated and countries that have mountains/ can do winter sports
+   
+## Personal Favourite Sport - Slalom Alpine Skiing (Winter Olympics)
+* Bar plot showing the top 10 athletes in Slalom Alpine Skiing by the total amount of 
+  medals they got over time
+  
+```{r Figure6, warning =  FALSE, fig.align = 'center', fig.cap = "Top Athletes Slalom \\label{Figure6}", fig.height = 4, fig.width = 6, dev = 'png'}
+source("code/Alpine_Skiing.R")
+Top_Athletes <- Alpine_Skiing(data=Winter)
+Top_Athletes
+
+```
+
+* Marlies Schild and Alberto Tomba both best athletes
+   + Only focusing on Slalom within Alpine Skiing; explains why maximum of medals is 3 per athlete
+   
+
+# Conclusion
+This report has hopefully helped to get you excited about the upcoming Summer and hopefully soon to be Winter Olympics, and to remind you of some of the historical figures in different disciplines within the Olympics and the performance of countries. 
